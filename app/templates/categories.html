@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="sm:flex sm:items-center">
+        <div class="sm:flex-auto">
+            <h1 class="text-2xl font-semibold leading-6 text-gray-900 dark:text-white">Categorias</h1>
+            <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                Gerencie categorias para organizar seus itens de compras.
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        <!-- Categories List -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-lg font-medium text-gray-900 dark:text-white">Todas as Categorias</h2>
+                </div>
+                
+                {% if categories %}
+                <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for category in categories %}
+                    <div class="px-6 py-4 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-4 h-4 rounded-full" style="background-color: {{ category.color }};"></div>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">{{ category.name }}</span>
+                        </div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                            {{ category.items.count() }} itens
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="px-6 py-12 text-center">
+                    <i class="fas fa-tags text-4xl text-gray-300 dark:text-gray-600"></i>
+                    <h3 class="mt-4 text-sm font-medium text-gray-900 dark:text-white">Nenhuma categoria ainda</h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Crie sua primeira categoria para organizar itens.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Add Category Form -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-lg font-medium text-gray-900 dark:text-white">Adicionar Categoria</h2>
+                </div>
+                
+                <form method="POST" action="{{ url_for('main.add_category') }}" class="px-6 py-4 space-y-4">
+                    {{ form.hidden_tag() }}
+                    
+                    <div>
+                        {{ form.name.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                        {{ form.name(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white", placeholder="ex: Frutas, Laticínios, Limpeza") }}
+                    </div>
+
+                    <div>
+                        {{ form.color.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                        <div class="mt-1 flex items-center space-x-3">
+                            {{ form.color(class="h-10 w-16 rounded border-gray-300 focus:border-primary focus:ring-primary", value="#6B7280") }}
+                            <div class="grid grid-cols-6 gap-1">
+                                <button type="button" class="w-6 h-6 rounded bg-red-500 color-option" data-color="#EF4444"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-orange-500 color-option" data-color="#F97316"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-yellow-500 color-option" data-color="#EAB308"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-green-500 color-option" data-color="#22C55E"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-blue-500 color-option" data-color="#3B82F6"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-purple-500 color-option" data-color="#A855F7"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-pink-500 color-option" data-color="#EC4899"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-indigo-500 color-option" data-color="#6366F1"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-teal-500 color-option" data-color="#14B8A6"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-cyan-500 color-option" data-color="#06B6D4"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-gray-500 color-option" data-color="#6B7280"></button>
+                                <button type="button" class="w-6 h-6 rounded bg-slate-500 color-option" data-color="#64748B"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        {{ form.submit(class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary cursor-pointer") }}
+                    </div>
+                </form>
+            </div>
+
+            <!-- Common Categories -->
+            <div class="mt-6 bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-sm font-medium text-gray-900 dark:text-white">Adição Rápida</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="grid grid-cols-1 gap-2">
+                        <button onclick="addQuickCategory('Frutas e Vegetais', '#22C55E')" 
+                                class="text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                            <i class="fas fa-apple-alt mr-2 text-green-500"></i>Frutas e Vegetais
+                        </button>
+                        <button onclick="addQuickCategory('Laticínios e Ovos', '#F97316')" 
+                                class="text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                            <i class="fas fa-cheese mr-2 text-orange-500"></i>Laticínios e Ovos
+                        </button>
+                        <button onclick="addQuickCategory('Carnes e Aves', '#EF4444')" 
+                                class="text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                            <i class="fas fa-drumstick-bite mr-2 text-red-500"></i>Carnes e Aves
+                        </button>
+                        <button onclick="addQuickCategory('Produtos de Limpeza', '#3B82F6')" 
+                                class="text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                            <i class="fas fa-spray-can mr-2 text-blue-500"></i>Produtos de Limpeza
+                        </button>
+                        <button onclick="addQuickCategory('Cuidados Pessoais', '#A855F7')" 
+                                class="text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                            <i class="fas fa-bath mr-2 text-purple-500"></i>Cuidados Pessoais
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Color picker functionality
+document.querySelectorAll('.color-option').forEach(button => {
+    button.addEventListener('click', function() {
+        const color = this.dataset.color;
+        document.getElementById('color').value = color;
+    });
+});
+
+function addQuickCategory(name, color) {
+    document.getElementById('name').value = name;
+    document.getElementById('color').value = color;
+}
+</script>
+{% endblock %}

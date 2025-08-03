@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Criar Nova Lista</h1>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Crie uma nova lista de compras para organizar seus itens.
+            </p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+            <form method="POST" class="px-6 py-8 space-y-6">
+                {{ form.hidden_tag() }}
+                
+                <div>
+                    {{ form.name.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                    <div class="mt-1">
+                        {{ form.name(class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white", placeholder="ex: Compras Semanais") }}
+                    </div>
+                    {% for error in form.name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div>
+                    {{ form.description.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                    <div class="mt-1">
+                        {{ form.description(class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white", rows="3", placeholder="Descrição opcional para esta lista") }}
+                    </div>
+                    {% for error in form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div>
+                    {{ form.category.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                    <div class="mt-1">
+                        {{ form.category(class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white", placeholder="ex: Compras, Festa, Casa") }}
+                    </div>
+                    {% for error in form.category.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <a href="{{ url_for('main.dashboard') }}" 
+                       class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
+                        Cancelar
+                    </a>
+                    {{ form.submit(class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

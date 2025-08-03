@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+        <h2 class="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 dark:text-white">
+            Entre na sua conta
+        </h2>
+    </div>
+
+    <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        <form class="space-y-6" method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div>
+                {{ form.username.label(class="block text-sm font-medium leading-6 text-gray-900 dark:text-white") }}
+                <div class="mt-2">
+                    {{ form.username(class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6") }}
+                </div>
+            </div>
+
+            <div>
+                {{ form.password.label(class="block text-sm font-medium leading-6 text-gray-900 dark:text-white") }}
+                <div class="mt-2">
+                    {{ form.password(class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6") }}
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    {{ form.remember_me(class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary") }}
+                    {{ form.remember_me.label(class="ml-3 block text-sm text-gray-900 dark:text-white") }}
+                </div>
+            </div>
+
+            <div>
+                {{ form.submit(class="flex w-full justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary cursor-pointer") }}
+            </div>
+        </form>
+
+        <p class="mt-10 text-center text-sm text-gray-500 dark:text-gray-400">
+            Não tem uma conta?
+            <a href="{{ url_for('auth.register') }}" class="font-semibold leading-6 text-primary hover:text-green-700">
+                Cadastre-se aqui
+            </a>
+        </p>
+    </div>
+</div>
+{% endblock %}

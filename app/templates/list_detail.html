@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ shopping_list.name }}</h1>
+                {% if shopping_list.description %}
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ shopping_list.description }}</p>
+                {% endif %}
+                <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                    <span>{{ items|length }} itens</span>
+                    <span>{{ shopping_list.get_purchased_items_count() }} concluídos</span>
+                    {% if shopping_list.get_total_estimated_price() > 0 %}
+                    <span class="font-medium text-primary">${{ "%.2f"|format(shopping_list.get_total_estimated_price()) }} estimado</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <a href="{{ url_for('main.dashboard') }}" 
+                   class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar ao Painel
+                </a>
+            </div>
+        </div>
+        
+        <!-- Progress bar -->
+        {% set progress = (shopping_list.get_purchased_items_count() / shopping_list.get_total_items_count() * 100) if shopping_list.get_total_items_count() > 0 else 0 %}
+        <div class="mt-4 w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+            <div class="bg-primary h-3 rounded-full transition-all duration-300" 
+                 style="width: {{ progress }}%"></div>
+        </div>
+        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ "%.1f"|format(progress) }}% concluído</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Items List -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-lg font-medium text-gray-900 dark:text-white">Itens</h2>
+                </div>
+                
+                {% if items %}
+                <div class="divide-y divide-gray-200 dark:divide-gray-700" id="items-list">
+                    {% for item in items %}
+                    <div class="px-6 py-4 flex items-center space-x-4 item-row" data-item-id="{{ item.id }}">
+                        <div class="flex-shrink-0">
+                            <input type="checkbox" 
+                                   class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary item-checkbox"
+                                   {% if item.is_purchased %}checked{% endif %}
+                                   onchange="toggleItem({{ item.id }})">
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white item-name {% if item.is_purchased %}line-through text-gray-500{% endif %}">
+                                        {{ item.name }}
+                                    </p>
+                                    <div class="flex items-center mt-1 space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                                        {% if item.quantity %}
+                                        <span>{{ item.quantity }} {{ item.unit }}</span>
+                                        {% endif %}
+                                        {% if item.item_category %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" 
+                                              style="background-color: {{ item.item_category.color }}20; color: {{ item.item_category.color }};">
+                                            {{ item.item_category.name }}
+                                        </span>
+                                        {% endif %}
+                                        {% if item.estimated_price %}
+                                        <span class="font-medium">${{ "%.2f"|format(item.estimated_price) }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% if item.notes %}
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ item.notes }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="flex space-x-2">
+                                    <button onclick="editItem({{ item.id }}, '{{ item.name|replace("'", "\\'") }}', '{{ item.quantity or '' }}', '{{ item.unit or '' }}', '{{ item.estimated_price or '' }}', '{{ (item.notes or '')|replace("'", "\\'") }}', '{{ item.item_category.id if item.item_category else '' }}')" 
+                                            class="text-gray-400 hover:text-blue-500 transition-colors">
+                                        <i class="fas fa-edit text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="px-6 py-12 text-center">
+                    <i class="fas fa-shopping-basket text-4xl text-gray-300 dark:text-gray-600"></i>
+                    <h3 class="mt-4 text-sm font-medium text-gray-900 dark:text-white">Nenhum item ainda</h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Comece adicionando itens à sua lista de compras.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Add Item Form -->
+        <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-lg font-medium text-gray-900 dark:text-white">Adicionar Item</h2>
+                </div>
+                
+                <form method="POST" action="{{ url_for('main.add_item', list_id=shopping_list.id) }}" class="px-6 py-4 space-y-4">
+                    {{ form.hidden_tag() }}
+                    
+                    <div>
+                        {{ form.name.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                        {{ form.name(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white", placeholder="ex: Leite") }}
+                    </div>
+
+                    <div>
+                        {{ form.category_id.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                        {{ form.category_id(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white") }}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            {{ form.quantity.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                            {{ form.quantity(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white", placeholder="1") }}
+                        </div>
+                        <div>
+                            {{ form.unit.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                            {{ form.unit(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white") }}
+                        </div>
+                    </div>
+
+                    <div>
+                        {{ form.estimated_price.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                        {{ form.estimated_price(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white", placeholder="0.00", step="0.01") }}
+                    </div>
+
+                    <div>
+                        {{ form.notes.label(class="block text-sm font-medium text-gray-700 dark:text-gray-300") }}
+                        {{ form.notes(class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white", rows="2", placeholder="Observações opcionais") }}
+                    </div>
+
+                    <div>
+                        {{ form.submit(class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary cursor-pointer") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleItem(itemId) {
+    const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+    fetch(`/toggle_item/${itemId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const itemRow = document.querySelector(`[data-item-id="${itemId}"]`);
+            const itemName = itemRow.querySelector('.item-name');
+            
+            if (data.is_purchased) {
+                itemName.classList.add('line-through', 'text-gray-500');
+                itemName.classList.remove('text-gray-900', 'dark:text-white');
+            } else {
+                itemName.classList.remove('line-through', 'text-gray-500');
+                itemName.classList.add('text-gray-900', 'dark:text-white');
+            }
+            
+            // Update progress bar
+            setTimeout(() => location.reload(), 500);
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao atualizar item. Tente novamente.');
+    });
+}
+
+function deleteItem(itemId) {
+    console.log('DEBUG: deleteItem chamada com ID:', itemId);
+    
+    if (confirm('Tem certeza que deseja excluir este item?')) {
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
+        console.log('DEBUG: CSRF Token encontrado:', csrfToken);
+        
+        console.log('DEBUG: Enviando requisição para:', `/delete_item/${itemId}`);
+        
+        fetch(`/delete_item/${itemId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => {
+            console.log('DEBUG: Resposta recebida:', response.status, response.statusText);
+            return response.json();
+        })
+        .then(data => {
+            console.log('DEBUG: Dados da resposta:', data);
+            if (data.success) {
+                // Remove o item da interface imediatamente
+                const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+                if (itemElement) {
+                    itemElement.remove();
+                }
+                // Recarrega a página para atualizar contadores
+                setTimeout(() => location.reload(), 300);
+            } else {
+                alert(data.message || 'Erro ao excluir item. Tente novamente.');
+            }
+        })
+        .catch(error => {
+            console.error('DEBUG: Erro na requisição:', error);
+            alert('Erro ao excluir item. Tente novamente.');
+        });
+    } else {
+        console.log('DEBUG: Exclusão cancelada pelo usuário');
+    }
+}
+
+function editItem(itemId, name, quantity, unit, price, notes, categoryId) {
+    // Preenche o modal com os dados do item
+    document.getElementById('edit-item-id').value = itemId;
+    document.getElementById('edit-item-name').value = name;
+    document.getElementById('edit-item-quantity').value = quantity;
+    document.getElementById('edit-item-unit').value = unit;
+    document.getElementById('edit-item-price').value = price;
+    document.getElementById('edit-item-notes').value = notes;
+    document.getElementById('edit-item-category').value = categoryId;
+    
+    // Mostra o modal
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+}
+</script>
+
+<!-- Modal de Edição -->
+<div id="edit-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-800">
+        <div class="mt-3">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Editar Item</h3>
+            <form method="POST" action="{{ url_for('main.edit_item') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" id="edit-item-id" name="item_id">
+                <input type="hidden" name="list_id" value="{{ list.id }}">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nome do Item</label>
+                    <input type="text" id="edit-item-name" name="name" required 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quantidade</label>
+                        <input type="number" id="edit-item-quantity" name="quantity" step="0.01" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Unidade</label>
+                        <select id="edit-item-unit" name="unit" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <option value="Unidade">Unidade</option>
+                            <option value="Kg">Kg</option>
+                            <option value="g">g</option>
+                            <option value="L">L</option>
+                            <option value="ml">ml</option>
+                            <option value="Pacote">Pacote</option>
+                            <option value="Caixa">Caixa</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Categoria</label>
+                    <select id="edit-item-category" name="category_id" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="">Sem Categoria</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preço Estimado</label>
+                    <input type="number" id="edit-item-price" name="estimated_price" step="0.01" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Observações</label>
+                    <textarea id="edit-item-notes" name="notes" rows="3" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeEditModal()" 
+                            class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors">
+                        Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
