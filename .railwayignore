@@ -1,0 +1,51 @@
+# Development files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Local database
+instance/database.db
+*.db
+
+# Environment files
+.env
+.venv/
+venv/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentation
+*.md
+DOCS/
+docs/
+
+# Git
+.git/
+.gitignore
+
+# Claude AI
+.claude/
+
+# Development scripts
+check_structure.py
+create_db.py
+init_db.py
