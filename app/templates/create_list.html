@@ -4,8 +4,8 @@
 <div class="px-4 sm:px-6 lg:px-8">
     <div class="max-w-2xl mx-auto">
         <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Criar Nova Lista</h1>
+        <div class="mb-6 sm:mb-8">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Criar Nova Lista</h1>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 Crie uma nova lista de compras para organizar seus itens.
             </p>
@@ -13,7 +13,7 @@
 
         <!-- Form -->
         <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-            <form method="POST" class="px-6 py-8 space-y-6">
+            <form method="POST" class="px-4 sm:px-6 py-6 sm:py-8 space-y-6">
                 {{ form.hidden_tag() }}
                 
                 <div>
@@ -46,12 +46,12 @@
                     {% endfor %}
                 </div>
 
-                <div class="flex justify-end space-x-3">
+                <div class="flex flex-col sm:flex-row sm:justify-end gap-3">
                     <a href="{{ url_for('main.dashboard') }}" 
-                       class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                        Cancelar
+                       class="w-full sm:w-auto inline-flex justify-center items-center rounded-md border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Cancelar
                     </a>
-                    {{ form.submit(class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer") }}
+                    {{ form.submit(class="w-full sm:w-auto inline-flex justify-center items-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer transition-colors") }}
                 </div>
             </form>
         </div>
