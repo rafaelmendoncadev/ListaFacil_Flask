@@ -49,3 +49,7 @@ docs/
 check_structure.py
 create_db.py
 init_db.py
+test_import.py
+
+# Development requirements
+requirements-dev.txt

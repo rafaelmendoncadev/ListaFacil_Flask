@@ -30,6 +30,7 @@ def create_app(config_class=Config):
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
     
+    # Import models to register them with SQLAlchemy
+    from app import models
+    
     return app
-
-from app import models
