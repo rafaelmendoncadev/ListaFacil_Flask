@@ -1,0 +1,19 @@
+[variables]
+PYTHON_VERSION = "3.11"
+
+[phases.setup]
+nixPkgs = ["python311", "python311Packages.pip", "python311Packages.virtualenv"]
+
+[phases.install]
+cmds = [
+  "python -m venv venv",
+  "source venv/bin/activate",
+  "pip install --upgrade pip",
+  "pip install -r requirements.txt"
+]
+
+[phases.build]
+cmds = ["echo 'Build phase completed'"]
+
+[start]
+cmd = "source venv/bin/activate && gunicorn wsgi:app --bind 0.0.0.0:$PORT"
