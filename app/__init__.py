@@ -33,4 +33,15 @@ def create_app(config_class=Config):
     # Import models to register them with SQLAlchemy
     from app import models
     
+    # Add error handlers
+    @app.errorhandler(500)
+    def internal_error(error):
+        db.session.rollback()
+        app.logger.error(f'Server Error: {error}')
+        return 'Internal Server Error', 500
+    
+    @app.errorhandler(404)
+    def not_found_error(error):
+        return 'Page Not Found', 404
+    
     return app
