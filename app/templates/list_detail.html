@@ -114,7 +114,7 @@
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between">
                                 <div class="flex-1">
-                                    <p class="text-sm font-medium text-gray-900 dark:text-white item-name {% if item.is_purchased %}line-through text-gray-500{% endif %}">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white item-name {% if item.is_purchased %}line-through text-gray-600 dark:text-gray-400{% endif %}">
                                         {{ item.name }}
                                     </p>
                                     <div class="flex items-center mt-1 space-x-2 text-xs text-gray-500 dark:text-gray-400">
@@ -122,8 +122,9 @@
                                         <span>{{ item.quantity }} {{ item.unit }}</span>
                                         {% endif %}
                                         {% if item.item_category %}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium" 
-                                              style="background-color: {{ item.item_category.color }}20; color: {{ item.item_category.color }};">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 category-tag" 
+                                              style="border-left: 3px solid {{ item.item_category.color }};" 
+                                              data-category-color="{{ item.item_category.color }}">
                                             {{ item.item_category.name }}
                                         </span>
                                         {% endif %}
@@ -137,9 +138,20 @@
                                 </div>
                                 
                                 <div class="flex space-x-2">
-                                    <button onclick="editItem({{ item.id }}, '{{ item.name|replace("'", "\\'") }}', '{{ item.quantity or '' }}', '{{ item.unit or '' }}', '{{ item.estimated_price or '' }}', '{{ (item.notes or '')|replace("'", "\\'") }}', '{{ item.item_category.id if item.item_category else '' }}')" 
-                                            class="text-gray-400 hover:text-blue-500 transition-colors">
+                                    <button class="edit-btn text-gray-400 hover:text-blue-500 transition-colors p-1 rounded" 
+                                            data-item-id="{{ item.id }}"
+                                            data-item-name="{{ item.name }}"
+                                            data-item-quantity="{{ item.quantity or '' }}"
+                                            data-item-unit="{{ item.unit or '' }}"
+                                            data-item-price="{{ item.estimated_price or '' }}"
+                                            data-item-notes="{{ item.notes or '' }}"
+                                            data-item-category="{{ item.item_category.id if item.item_category else '' }}"
+                                            title="Editar item">
                                         <i class="fas fa-edit text-xs"></i>
+                                    </button>
+                                    <button class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-1 rounded" 
+                                            data-item-id="{{ item.id }}" title="Excluir item">
+                                        <i class="fas fa-trash text-xs"></i>
                                     </button>
                                 </div>
                             </div>
@@ -160,101 +172,8 @@
     </div>
 </div>
 
-<script>
-function toggleItem(itemId) {
-    const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-    fetch(`/toggle_item/${itemId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const itemRow = document.querySelector(`[data-item-id="${itemId}"]`);
-            const itemName = itemRow.querySelector('.item-name');
-            
-            if (data.is_purchased) {
-                itemName.classList.add('line-through', 'text-gray-500');
-                itemName.classList.remove('text-gray-900', 'dark:text-white');
-            } else {
-                itemName.classList.remove('line-through', 'text-gray-500');
-                itemName.classList.add('text-gray-900', 'dark:text-white');
-            }
-            
-            // Update progress bar
-            setTimeout(() => location.reload(), 500);
-        }
-    })
-    .catch(error => {
-        console.error('Erro:', error);
-        alert('Erro ao atualizar item. Tente novamente.');
-    });
-}
-
-function deleteItem(itemId) {
-    console.log('DEBUG: deleteItem chamada com ID:', itemId);
-    
-    if (confirm('Tem certeza que deseja excluir este item?')) {
-        const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-        console.log('DEBUG: CSRF Token encontrado:', csrfToken);
-        
-        console.log('DEBUG: Enviando requisição para:', `/delete_item/${itemId}`);
-        
-        fetch(`/delete_item/${itemId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            }
-        })
-        .then(response => {
-            console.log('DEBUG: Resposta recebida:', response.status, response.statusText);
-            return response.json();
-        })
-        .then(data => {
-            console.log('DEBUG: Dados da resposta:', data);
-            if (data.success) {
-                // Remove o item da interface imediatamente
-                const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
-                if (itemElement) {
-                    itemElement.remove();
-                }
-                // Recarrega a página para atualizar contadores
-                setTimeout(() => location.reload(), 300);
-            } else {
-                alert(data.message || 'Erro ao excluir item. Tente novamente.');
-            }
-        })
-        .catch(error => {
-            console.error('DEBUG: Erro na requisição:', error);
-            alert('Erro ao excluir item. Tente novamente.');
-        });
-    } else {
-        console.log('DEBUG: Exclusão cancelada pelo usuário');
-    }
-}
-
-function editItem(itemId, name, quantity, unit, price, notes, categoryId) {
-    // Preenche o modal com os dados do item
-    document.getElementById('edit-item-id').value = itemId;
-    document.getElementById('edit-item-name').value = name;
-    document.getElementById('edit-item-quantity').value = quantity;
-    document.getElementById('edit-item-unit').value = unit;
-    document.getElementById('edit-item-price').value = price;
-    document.getElementById('edit-item-notes').value = notes;
-    document.getElementById('edit-item-category').value = categoryId;
-    
-    // Mostra o modal
-    document.getElementById('edit-modal').classList.remove('hidden');
-}
-
-function closeEditModal() {
-    document.getElementById('edit-modal').classList.add('hidden');
-}
-</script>
+<script src="{{ url_for('static', filename='js/list_detail.js') }}?v=1.1"></script>
+<!-- Cache buster: v3.1 -->
 
 <!-- Modal de Edição -->
 <div id="edit-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">

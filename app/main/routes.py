@@ -103,7 +103,7 @@ def toggle_item(item_id):
 def delete_item(item_id):
     print(f"DEBUG: Tentando excluir item {item_id}")
     print(f"DEBUG: Método: {request.method}")
-    print(f"DEBUG: Form data: {request.form}")
+    print(f"DEBUG: Headers: {dict(request.headers)}")
     
     try:
         item = Item.query.join(List).filter(
@@ -119,12 +119,26 @@ def delete_item(item_id):
         
         print(f"DEBUG: Item excluído com sucesso")
         
+        # Se for uma requisição AJAX, retorna JSON
+        if (request.headers.get('Content-Type') == 'application/json' or 
+            request.headers.get('Accept', '').find('application/json') != -1 or
+            request.headers.get('X-Requested-With') == 'XMLHttpRequest'):
+            return jsonify({'success': True, 'message': 'Item excluído com sucesso!'})
+        
+        # Caso contrário, redireciona (para compatibilidade)
         flash('Item excluído com sucesso!', 'success')
         return redirect(url_for('main.list_detail', id=list_id))
         
     except Exception as e:
         print(f"DEBUG: Erro ao excluir item: {str(e)}")
         db.session.rollback()
+        
+        # Se for uma requisição AJAX, retorna JSON de erro
+        if (request.headers.get('Content-Type') == 'application/json' or 
+            request.headers.get('Accept', '').find('application/json') != -1 or
+            request.headers.get('X-Requested-With') == 'XMLHttpRequest'):
+            return jsonify({'success': False, 'message': 'Erro ao excluir item'}), 500
+        
         flash('Erro ao excluir item', 'error')
         return redirect(url_for('main.dashboard'))
 

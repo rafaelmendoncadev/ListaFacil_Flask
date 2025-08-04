@@ -5,22 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{% if title %}{{ title }} - ListaFácil{% else %}ListaFácil{% endif %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#059669',
-                        secondary: '#DC2626',
-                        neutral: '#6B7280'
-                    }
-                }
-            }
+    <style>
+        /* Cache bust: 2025-01-03 */
+        /* Theme toggle icons - Light theme shows moon (switch to dark), Dark theme shows sun (switch to light) */
+        .icon-sun{display:none !important}
+        .dark .icon-sun{display:inline-block !important}
+        .dark .icon-moon{display:none !important}
+        .icon-moon{display:inline-block !important}
+        
+        /* Override any conflicting Tailwind classes */
+        .icon-moon.hidden,
+        .icon-sun.hidden {
+            display: none !important;
         }
-    </script>
+        .dark .icon-moon.hidden {
+            display: none !important;
+        }
+        .dark .icon-sun.hidden {
+            display: none !important;
+        }
+        
+        /* Category color adjustments for themes */
+        .category-tag {
+            transition: color 0.15s ease-in-out;
+            /* Force proper background and ensure no unwanted background transparency */
+            background-color: rgb(243 244 246) !important;
+        }
+        
+        .dark .category-tag {
+            background-color: rgb(55 65 81) !important;
+        }
+        
+        .category-indicator {
+            transition: background-color 0.15s ease-in-out;
+        }
+        
+        /* Prevent any external styling from overriding category colors */
+        .category-tag,
+        [data-category-color] {
+            /* Remove any problematic background transparency */
+            background-image: none !important;
+        }
+        
+        /* Fix for any inline styles that might have transparency issues */
+        span[style*="background-color: #"][style*="color: #"],
+        .inline-flex[style*="background-color: #"][style*="color: #"] {
+            background-color: rgb(243 244 246) !important;
+            /* Force proper text color based on content */
+        }
+        
+        .dark span[style*="background-color: #"][style*="color: #"],
+        .dark .inline-flex[style*="background-color: #"][style*="color: #"] {
+            background-color: rgb(55 65 81) !important;
+        }
+        
+        /* More specific fix for the problematic pattern */
+        span[style*="#FEF3C720"],
+        span[style*="#FEF3C7"] {
+            background-color: rgb(243 244 246) !important;
+            color: #92400e !important; /* Dark orange for better contrast */
+        }
+        
+        .dark span[style*="#FEF3C720"],
+        .dark span[style*="#FEF3C7"] {
+            background-color: rgb(55 65 81) !important;
+            color: #fcd34d !important; /* Light yellow for dark theme */
+        }
+        
+        /* Ultra-specific fixes for the exact problematic elements */
+        .inline-flex.items-center.px-2.py-0\.5.rounded.text-xs.font-medium[style*="#FEF3C7"] {
+            background-color: rgb(243 244 246) !important;
+            color: #92400e !important;
+        }
+        
+        .dark .inline-flex.items-center.px-2.py-0\.5.rounded.text-xs.font-medium[style*="#FEF3C7"] {
+            background-color: rgb(55 65 81) !important;
+            color: #fcd34d !important;
+        }
+        
+        /* Force override any transparency patterns */
+        *[style*="background-color: #"][style*="20;"][style*="color: #"] {
+            background-color: rgb(243 244 246) !important;
+            color: #374151 !important;
+        }
+        
+        .dark *[style*="background-color: #"][style*="20;"][style*="color: #"] {
+            background-color: rgb(55 65 81) !important;
+            color: #d1d5db !important;
+        }
+    </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="{{ url_for('static', filename='css/styles.css') }}?v=1.2" rel="stylesheet">
 </head>
 <body class="h-full bg-gray-50 dark:bg-gray-900">
     <div class="min-h-full">
@@ -40,8 +115,8 @@
                     <div class="hidden md:flex items-center space-x-4">
                         <!-- Dark mode toggle -->
                         <button id="theme-toggle" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-                            <i class="fas fa-moon dark:hidden"></i>
-                            <i class="fas fa-sun hidden dark:inline"></i>
+                            <i class="fas fa-moon icon-moon"></i>
+                            <i class="fas fa-sun icon-sun"></i>
                         </button>
                         
                         {% if current_user.is_authenticated %}
@@ -76,8 +151,8 @@
                     <div class="md:hidden flex items-center space-x-2">
                         <!-- Dark mode toggle mobile -->
                         <button id="theme-toggle-mobile" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-                            <i class="fas fa-moon dark:hidden"></i>
-                            <i class="fas fa-sun hidden dark:inline"></i>
+                            <i class="fas fa-moon icon-moon"></i>
+                            <i class="fas fa-sun icon-sun"></i>
                         </button>
                         
                         <button id="mobile-menu-button" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
@@ -145,16 +220,40 @@
         // Dark mode toggle
         const themeToggle = document.getElementById('theme-toggle');
         const themeToggleMobile = document.getElementById('theme-toggle-mobile');
+        
         const html = document.documentElement;
+        function syncThemeIcons(){
+            // Clean up any conflicting classes that might interfere with our CSS
+            document.querySelectorAll('.icon-moon, .icon-sun').forEach(el => {
+                // Remove all Tailwind visibility classes that could conflict
+                el.classList.remove('hidden', 'inline', 'inline-block', 'block');
+                // Remove dark mode variants
+                const classList = Array.from(el.classList);
+                classList.forEach(className => {
+                    if (className.startsWith('dark:')) {
+                        el.classList.remove(className);
+                    }
+                });
+            });
+            // Our CSS with !important will handle all visibility
+        }
         
         // Check for saved theme preference or default to 'light'
         const theme = localStorage.getItem('theme') || 'light';
-        html.classList.toggle('dark', theme === 'dark');
+          html.classList.toggle('dark', theme === 'dark');
+          syncThemeIcons();
+          
+          // Force immediate fix for problematic styles
+          fixProblematicStyles();
+          updateCategoryColors();
+        
         
         function toggleTheme() {
             html.classList.toggle('dark');
             const isDark = html.classList.contains('dark');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            syncThemeIcons();
+            updateCategoryColors();
         }
         
         if (themeToggle) {
@@ -225,6 +324,214 @@
         }
         
         window.addEventListener('resize', handleResize);
+        
+        // Monitor DOM changes for dynamically added category elements
+        function setupCategoryObserver() {
+            const observer = new MutationObserver(function(mutations) {
+                let needsUpdate = false;
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) { // Element node
+                                // Check if the added node or its children have category styling issues
+                                const elements = [node, ...node.querySelectorAll('*')];
+                                elements.forEach(function(el) {
+                                    const style = el.getAttribute && el.getAttribute('style');
+                                    if (style && style.includes('background-color:') && style.includes('color:')) {
+                                        needsUpdate = true;
+                                    }
+                                });
+                            }
+                        });
+                    } else if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                        const style = mutation.target.getAttribute('style');
+                        if (style && style.includes('background-color:') && style.includes('color:')) {
+                            needsUpdate = true;
+                        }
+                    }
+                });
+                
+                if (needsUpdate) {
+                    setTimeout(updateCategoryColors, 10); // Small delay to ensure DOM is ready
+                }
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style']
+            });
+        }
+        
+        // Initialize observer
+        setupCategoryObserver();
+        
+        // Immediate fix on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            syncThemeIcons(); // Fix icons first
+            fixProblematicStyles();
+            updateCategoryColors();
+        });
+        
+        // Also fix on window load (for delayed content)
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                syncThemeIcons(); // Fix icons again
+                fixProblematicStyles();
+                updateCategoryColors();
+            }, 100);
+        });
+        
+        // Periodic cleanup to ensure consistent styling
+        setInterval(function() {
+            fixProblematicStyles();
+            updateCategoryColors();
+        }, 500); // Check every half second for style inconsistencies
+        
+        // Function to aggressively fix problematic inline styles
+        function fixProblematicStyles() {
+            // Find all elements with the problematic style pattern
+            document.querySelectorAll('*').forEach(function(el) {
+                const style = el.getAttribute('style');
+                if (style) {
+                    // Check for the specific problematic pattern
+                    if (style.includes('#FEF3C720') || 
+                        style.includes('#FEF3C7') || 
+                        (style.includes('background-color:') && style.includes('20;') && style.includes('color:'))) {
+                        
+                        const isDark = html.classList.contains('dark');
+                        
+                        // Remove the problematic inline styles completely
+                        el.style.backgroundColor = '';
+                        el.style.color = '';
+                        
+                        // Apply proper colors based on theme
+                        if (isDark) {
+                            el.style.setProperty('background-color', 'rgb(55, 65, 81)', 'important');
+                            el.style.setProperty('color', '#fcd34d', 'important'); // Light yellow
+                        } else {
+                            el.style.setProperty('background-color', 'rgb(243, 244, 246)', 'important');
+                            el.style.setProperty('color', '#92400e', 'important'); // Dark orange
+                        }
+                        
+                        // Add classes for better control
+                        el.classList.add('category-tag', 'fixed-category-color');
+                        el.setAttribute('data-category-color', '#FEF3C7');
+                    }
+                }
+            });
+        }
+        
+        // Category color adjustment based on theme
+        function updateCategoryColors() {
+            const isDark = html.classList.contains('dark');
+            
+            // Update category tags (item categories in list detail)
+            document.querySelectorAll('.category-tag, [data-category-color]').forEach(tag => {
+                const originalColor = tag.dataset.categoryColor;
+                if (originalColor) {
+                    // Remove any existing inline background-color and color styles
+                    tag.style.backgroundColor = '';
+                    tag.style.color = '';
+                    
+                    // Convert hex to RGB
+                    const hex = originalColor.replace('#', '');
+                    const r = parseInt(hex.substr(0, 2), 16);
+                    const g = parseInt(hex.substr(2, 2), 16);
+                    const b = parseInt(hex.substr(4, 2), 16);
+                    
+                    // Calculate luminance
+                    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                    
+                    if (isDark) {
+                        // In dark mode, make dark colors lighter and keep light colors
+                        if (luminance < 0.5) {
+                            // Make dark colors lighter for better contrast in dark mode
+                            const factor = 1.8;
+                            const newR = Math.min(255, r * factor);
+                            const newG = Math.min(255, g * factor);
+                            const newB = Math.min(255, b * factor);
+                            tag.style.color = `rgb(${newR}, ${newG}, ${newB})`;
+                        } else {
+                            // Keep light colors as they are
+                            tag.style.color = originalColor;
+                        }
+                    } else {
+                        // In light mode, make light colors darker and keep dark colors
+                        if (luminance > 0.6) {
+                            // Make light colors darker for better contrast in light mode
+                            const factor = 0.6;
+                            const newR = r * factor;
+                            const newG = g * factor;
+                            const newB = b * factor;
+                            tag.style.color = `rgb(${newR}, ${newG}, ${newB})`;
+                        } else {
+                            // Keep dark colors as they are
+                            tag.style.color = originalColor;
+                        }
+                    }
+                }
+            });
+            
+            // Find and fix any elements with problematic inline styles
+            document.querySelectorAll('*').forEach(el => {
+                const style = el.getAttribute('style');
+                if (style && style.includes('background-color:') && style.includes('color:')) {
+                    // Check if this looks like a category tag with transparency issues
+                    const bgMatch = style.match(/background-color:\s*([^;]+)/);
+                    const colorMatch = style.match(/color:\s*([^;]+)/);
+                    
+                    if (bgMatch && colorMatch) {
+                        const bgColor = bgMatch[1].trim();
+                        const textColor = colorMatch[1].trim();
+                        
+                        // If background has transparency (ends with numbers) and color matches without transparency
+                        if (bgColor.match(/#[A-Fa-f0-9]{6}[0-9A-Fa-f]{2}$/) && textColor.match(/#[A-Fa-f0-9]{6}$/)) {
+                            const baseColor = textColor;
+                            
+                            // Remove the problematic styles and apply proper theming
+                            el.style.backgroundColor = '';
+                            el.style.color = '';
+                            el.classList.add('category-tag');
+                            el.setAttribute('data-category-color', baseColor);
+                            
+                            // Apply proper color based on theme
+                            const hex = baseColor.replace('#', '');
+                            const r = parseInt(hex.substr(0, 2), 16);
+                            const g = parseInt(hex.substr(2, 2), 16);
+                            const b = parseInt(hex.substr(4, 2), 16);
+                            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                            
+                            if (isDark) {
+                                if (luminance < 0.5) {
+                                    const factor = 1.8;
+                                    const newR = Math.min(255, r * factor);
+                                    const newG = Math.min(255, g * factor);
+                                    const newB = Math.min(255, b * factor);
+                                    el.style.color = `rgb(${newR}, ${newG}, ${newB})`;
+                                } else {
+                                    el.style.color = baseColor;
+                                }
+                            } else {
+                                if (luminance > 0.6) {
+                                    const factor = 0.6;
+                                    const newR = r * factor;
+                                    const newG = g * factor;
+                                    const newB = b * factor;
+                                    el.style.color = `rgb(${newR}, ${newG}, ${newB})`;
+                                } else {
+                                    el.style.color = baseColor;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Category indicators don't need adjustment as they're background colors
+            // and work well in both themes
+        }
     </script>
 </body>
 </html>
