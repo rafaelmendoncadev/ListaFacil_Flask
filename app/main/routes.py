@@ -40,7 +40,14 @@ def create_list():
 def list_detail(id):
     shopping_list = List.query.filter_by(id=id, user_id=current_user.id).first_or_404()
     items = shopping_list.items.order_by(Item.position, Item.created_at).all()
-    categories = Category.query.all()
+    
+    # Safely get categories with error handling
+    try:
+        categories = Category.query.all()
+    except Exception as e:
+        print(f"Error fetching categories: {e}")
+        categories = []
+    
     form = ItemForm()
     form.category_id.choices = [(0, 'Sem Categoria')] + [(c.id, c.name) for c in categories]
     return render_template('list_detail.html', title=shopping_list.name, 
@@ -211,7 +218,13 @@ def delete_list(list_id):
 @bp.route('/categories')
 @login_required
 def categories():
-    categories = Category.query.all()
+    try:
+        categories = Category.query.all()
+    except Exception as e:
+        print(f"Error fetching categories: {e}")
+        categories = []
+        flash('Erro ao carregar categorias. Tente novamente.', 'error')
+    
     form = CategoryForm()
     return render_template('categories.html', title='Categorias', categories=categories, form=form)
 
