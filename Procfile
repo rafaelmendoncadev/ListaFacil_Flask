@@ -1,2 +1,2 @@
-release: python railway_init.py
-web: gunicorn wsgi:app --bind 0.0.0.0:$PORT
+release: ./railway_deploy.sh
+web: gunicorn wsgi:app
